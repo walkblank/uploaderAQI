@@ -2,11 +2,12 @@
 #define UPLOADCLIENT_H
 
 #include <QObject>
+#include <QTcpSocket>
 
-class UploadClient
+class UploadClient : public QTcpSocket
 {
 public:
-    UploadClient();
+    UploadClient(QObject *parent = nullptr);
 };
 
 #endif // UPLOADCLIENT_H
