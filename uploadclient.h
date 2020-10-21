@@ -3,11 +3,20 @@
 
 #include <QObject>
 #include <QTcpSocket>
+#include <QString>
 
 class UploadClient : public QTcpSocket
 {
+    Q_OBJECT
 public:
-    UploadClient(QObject *parent = nullptr);
+    explicit UploadClient(QObject *parent = nullptr);
+
+private slots:
+    void onDataRecv();
+
+private:
+    int  sendPacket(QString contentStr);
+    int  getCRC(QString str);
 };
 
 #endif // UPLOADCLIENT_H

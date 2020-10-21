@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "calibclient.h"
+#include "uploadclient.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,7 +17,27 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void on_connServerBtn_clicked();
+    void on_connDevBtn_clicked();
+
+    void onServerConnected();
+    void onServerDisconnected();
+    void onServerError(QAbstractSocket::SocketError error);
+
+    void onDevConnected();
+    void onDevDisconnected();
+//    void onDevError(QAbstractSocket::SocketError error);
+
+    void on_startUploadBtn_clicked();
+
 private:
     Ui::MainWindow *ui;
+
+    UploadClient *upClient;
+    CalibClient *cpcClient;
+
+private:
+    void initChartsView();
 };
 #endif // MAINWINDOW_H
