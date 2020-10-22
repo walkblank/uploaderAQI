@@ -10,6 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
     cpcClient = new CalibClient();
     connect(cpcClient, SIGNAL(sigConnected()), this, SLOT(onDevConnected()));
     connect(cpcClient, SIGNAL(sigDisConnected()), this, SLOT(onDevDisconnected()));
+    connect(cpcClient, SIGNAL(sigReadData(QString,QMap<QString,QString>)),
+            this, SLOT(onCpcData(QString,QMap<QString,QString>)));
 
     upClient =  new UploadClient();
     connect(upClient, SIGNAL(connected()), this, SLOT(onServerConnected()));
@@ -71,7 +73,11 @@ void MainWindow::on_connDevBtn_clicked()
         cpcClient->connectToHost(ui->devIp->text(), ui->devPort->text().toUInt());
 }
 
-void MainWindow::on_startUploadBtn_clicked()
+void MainWindow::onCpcData(QString client, QMap<QString, QString> data)
 {
 
+}
+
+void MainWindow::on_startUploadBtn_clicked()
+{
 }

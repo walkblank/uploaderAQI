@@ -31,6 +31,8 @@ private slots:
 
     void on_startUploadBtn_clicked();
 
+    void onCpcData(QString, QMap<QString,QString>);
+
 private:
     Ui::MainWindow *ui;
 

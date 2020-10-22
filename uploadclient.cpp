@@ -6,6 +6,28 @@ UploadClient::UploadClient(QObject *parent)
     connect(this, SIGNAL(readyRead()), this, SLOT(onDataRecv()));
 }
 
+int UploadClient::uploadHourData(QString hourStr, double a18Value, double a19Value)
+{
+    QString a18Flag = "N";
+    QString a19Flag = "N";
+    QString uploadDataContent = QString("ST=22;CN=2061;PW=123456;MN=ATCS0001;CP=&&DataTime=%1;"
+                                        "A18-Avg=%2,A18-flag=%3;A19-Avg=%4,A19-flag=%5&&")
+            .arg(hourStr).arg(a18Value).arg(a18Flag).arg(a19Value).arg(a19Flag);
+    qDebug()<<"hour data content" << uploadDataContent;
+    sendPacket(uploadDataContent);
+}
+
+int UploadClient::uploadMinData(QString minStr, double a18Value, double a19Value)
+{
+    QString a18Flag = "N";
+    QString a19Flag = "N";
+    QString uploadDataContent = QString("ST=22;CN=2011;PW=123456;MN=ATCS0001;CP=&&DataTime=%1;"
+                                        "A18-Avg=%2,A18-flag=%3;A19-Avg=%4,A19-flag=%5&&")
+            .arg(minStr).arg(a18Value).arg(a18Flag).arg(a19Value).arg(a19Flag);
+    qDebug()<<"hour data content" << uploadDataContent;
+    sendPacket(uploadDataContent);
+}
+
 //##0097ST=22;CN=2061;PW=123456;MN=TJTYTYACFC0011;CP=&&DataTime=20160516130000;A18-Avg=40.28,A18-flag=N&&FE41
 int UploadClient::sendPacket(QString contentStr)
 {
@@ -19,6 +41,9 @@ int UploadClient::sendPacket(QString contentStr)
 
 void UploadClient::onDataRecv()
 {
+    static QString strLeft = QString();
+    QString dataRecv = readAll();
+    qDebug()<<"dataRecv" << dataRecv.size() << dataRecv;
 }
 
 int  UploadClient::getCRC(QString dataStr)
