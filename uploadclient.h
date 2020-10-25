@@ -20,6 +20,9 @@ private:
     qint64  sendPacket(QString contentStr);
     int  getCRC(QString str);
     bool setSystemDateTime(QDateTime dt);
+    void parseContent(QString content);
+
+    qint64 replayTimeSyncReq(bool setResult);
 };
 
 #endif // UPLOADCLIENT_H

@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSettings>
+
 #include "calibclient.h"
 #include "uploadclient.h"
 
@@ -36,10 +38,12 @@ private slots:
 private:
     Ui::MainWindow *ui;
 
+    QSettings *setting;
     UploadClient *upClient;
     CalibClient *cpcClient;
 
 private:
     void initChartsView();
+    void loadSettings();
 };
 #endif // MAINWINDOW_H

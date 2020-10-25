@@ -43,20 +43,72 @@ qint64 UploadClient::sendPacket(QString contentStr)
     return write(sendDataStr.toStdString().c_str());
 }
 
+qint64 UploadClient::replayTimeSyncReq(bool setResult)
+{
+    QString replyContent = QString("ST=91;CN=1012;PW=123456;MN=ATCS0001;CP=&&QN=%1;ExeRtn=%2&&")
+            .arg(QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz")).arg(setResult ? 1 : 0);
+    qDebug()<<"replyContent"<< replyContent;
+    return sendPacket(replyContent);
+}
+
+void UploadClient::parseContent(QString content)
+{
+    qDebug()<<"content";
+    int length = content.mid(0, 4).toUInt(0, 16);
+    QString crc =  content.mid(content.length()-6, 4);
+    qDebug()<<"crc" << crc;
+    qDebug()<<"length" << length;
+    qDebug()<<"content" << content;
+
+    QStringList fields;
+    fields = content.split(";");
+    QString cmd, data;
+    foreach(QString field, fields)
+    {
+        qDebug()<<field;
+        if(field.contains("CN="))
+            cmd = field.split("=")[1];
+        if(field.contains("CP=&&"))
+            data = field.split("&&")[1];
+    }
+
+    qDebug()<<"cmd" << cmd << "\r\ndata" << data;
+    if(cmd == "1012") // sync time
+    {
+        QDateTime sTime = QDateTime::fromString(data.split("=")[1], "yyyyMMddhhmmsszzz");
+        qDebug()<<"time" << sTime;
+        qDebug()<<"time" << sTime.time().hour();
+
+//        qDebug()<<"what are you talking about";
+//        bool res = setSystemDateTime(sTime);
+        replayTimeSyncReq(setSystemDateTime(sTime));
+    }
+//    if(cmd == "")
+}
+
 void UploadClient::onDataRecv()
 {
     static QString strLeft = QString();
     QString dataRecv = readAll();
     qDebug()<<"dataRecv" << dataRecv.size() << dataRecv;
+    strLeft.append(dataRecv);
+    qDebug()<<"str after recv" << strLeft;
 
-    if(dataRecv.contains("\r\n"))
+    while(strLeft.contains("\r\n"))
     {
-        int endPos = dataRecv.indexOf("\r\n");
-        qDebug()<<"endPos";
-    }
-    else
-    {
-        strLeft.append(dataRecv);
+        int endPos = strLeft.indexOf("\r\n");
+
+        if(strLeft.contains("##"))
+        {
+            int startPos = strLeft.indexOf("##");
+            qDebug()<<"endPos" << endPos << "startPos" << startPos;
+            // ##0097
+            QString content = strLeft.mid(startPos+2, endPos-startPos);
+            parseContent(content);
+        }
+
+        strLeft = strLeft.mid(endPos+2, strLeft.length()-endPos);
+        qDebug()<<"now strLeft" << strLeft;
     }
 }
 
@@ -69,8 +121,9 @@ bool UploadClient::setSystemDateTime(QDateTime dt)
     systm.wHour = dt.time().hour();
     systm.wMinute = dt.time().minute();
     systm.wSecond = dt.time().second();
+    //systm.wMilliseconds = dt.time().msec();
 
-    return SetSystemTime(&systm);
+    return SetLocalTime(&systm);
 }
 
 int  UploadClient::getCRC(QString dataStr)

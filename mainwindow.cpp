@@ -18,6 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(upClient, SIGNAL(disconnected()), this, SLOT(onServerDisconnected()));
     connect(upClient, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(onServerError(QAbstractSocket::SocketError)));
+
+    loadSettings();
 }
 
 MainWindow::~MainWindow()
@@ -25,11 +27,26 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::loadSettings()
+{
+    setting = new QSettings("setting.ini", QSettings::IniFormat);
+    if(setting->contains("deviceIp"))
+        ui->devIp->setText(setting->value("deviceIp").toString());
+    if(setting->contains("devicePort"))
+        ui->devPort->setText(setting->value("devicePort").toString());
+    if(setting->contains("serverIp"))
+        ui->serverIp->setText(setting->value("serverIp").toString());
+    if(setting->contains("serverPort"))
+        ui->serverPort->setText(setting->value("serverPort").toString());
+}
+
 void MainWindow::onDevConnected()
 {
     qDebug()<<"server connected";
     ui->devIp->setStyleSheet("background-color: rgb(0, 255, 127);");
     ui->connDevBtn->setText("断开连接");
+    setting->setValue("deviceIp", ui->devIp->text());
+    setting->setValue("devicePort", ui->devPort->text());
 }
 
 void MainWindow::onDevDisconnected()
@@ -44,6 +61,9 @@ void MainWindow::onServerConnected()
     qDebug()<<"server connected";
     ui->serverIp->setStyleSheet("background-color: rgb(0, 255, 127);");
     ui->connServerBtn->setText("断开连接");
+
+    setting->setValue("serverIp", ui->serverIp->text());
+    setting->setValue("serverPort", ui->serverPort->text());
 }
 
 void MainWindow::onServerDisconnected()
