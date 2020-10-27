@@ -1,6 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QDateTime>
+#include <QTime>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -8,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     cpcClient = new CalibClient();
+    cpcClient->setClientType("cpc");
     connect(cpcClient, SIGNAL(sigConnected()), this, SLOT(onDevConnected()));
     connect(cpcClient, SIGNAL(sigDisConnected()), this, SLOT(onDevDisconnected()));
     connect(cpcClient, SIGNAL(sigReadData(QString,QMap<QString,QString>)),
@@ -19,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(upClient, SIGNAL(error(QAbstractSocket::SocketError)),
             this, SLOT(onServerError(QAbstractSocket::SocketError)));
 
+    secTimer = new QTimer();
+    connect(secTimer, SIGNAL(timeout()), this, SLOT(onSecTimerTimeout()));
+
     loadSettings();
 }
 
@@ -27,11 +34,17 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::onSecTimerTimeout()
+{
+    QTime curTime = QTime::currentTime();
+    qDebug()<<"curTime" << curTime << curTime.second();
+}
+
 void MainWindow::loadSettings()
 {
-    setting = new QSettings("setting.ini", QSettings::IniFormat);
-    if(setting->contains("deviceIp"))
-        ui->devIp->setText(setting->value("deviceIp").toString());
+setting = new QSettings("setting.ini", QSettings::IniFormat);
+if(setting->contains("deviceIp"))
+ui->devIp->setText(setting->value("deviceIp").toString());
     if(setting->contains("devicePort"))
         ui->devPort->setText(setting->value("devicePort").toString());
     if(setting->contains("serverIp"))
@@ -76,6 +89,8 @@ void MainWindow::onServerDisconnected()
 void MainWindow::onServerError(QAbstractSocket::SocketError error)
 {
     qDebug()<<"server error";
+    ui->serverIp->setStyleSheet("background-color: rgb(255, 0, 0);");
+    ui->connServerBtn->setText("连接");
 }
 void MainWindow::on_connServerBtn_clicked()
 {
@@ -95,9 +110,20 @@ void MainWindow::on_connDevBtn_clicked()
 
 void MainWindow::onCpcData(QString client, QMap<QString, QString> data)
 {
-
+    qDebug()<<" on data " << client << data;
 }
 
 void MainWindow::on_startUploadBtn_clicked()
 {
+    if(secTimer->isActive())
+        secTimer->stop();
+    else
+        secTimer->start(1000);
+}
+
+void MainWindow::on_testBtn_clicked()
+{
+    QList<QString> values;
+    values << "62" << "64";
+    cpcClient->getValue(values);
 }

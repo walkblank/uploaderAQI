@@ -43,12 +43,17 @@ qint64 UploadClient::sendPacket(QString contentStr)
     return write(sendDataStr.toStdString().c_str());
 }
 
-qint64 UploadClient::replayTimeSyncReq(bool setResult)
+qint64 UploadClient::replyTimeSyncReq(bool setResult)
 {
     QString replyContent = QString("ST=91;CN=1012;PW=123456;MN=ATCS0001;CP=&&QN=%1;ExeRtn=%2&&")
             .arg(QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz")).arg(setResult ? 1 : 0);
     qDebug()<<"replyContent"<< replyContent;
     return sendPacket(replyContent);
+}
+
+qint64 UploadClient::replyUploadReq(QString beginTime, QString endTime)
+{
+
 }
 
 void UploadClient::parseContent(QString content)
@@ -79,11 +84,21 @@ void UploadClient::parseContent(QString content)
         qDebug()<<"time" << sTime;
         qDebug()<<"time" << sTime.time().hour();
 
-//        qDebug()<<"what are you talking about";
-//        bool res = setSystemDateTime(sTime);
-        replayTimeSyncReq(setSystemDateTime(sTime));
+        replyTimeSyncReq(setSystemDateTime(sTime));
     }
-//    if(cmd == "")
+    if(cmd == "2062") //
+    {
+        qDebug()<<"upload request";
+        QString beginTime, endTime;
+        foreach(QString time,  data.split(","))
+        {
+            if(time.contains("BeginTime="))
+                beginTime = time.split("=")[1];
+            else if(time.contains("EndTime"))
+                endTime = time.split("=")[1];
+        }
+        qDebug()<<"beginTime" << beginTime << "endTime" << endTime;
+    }
 }
 
 void UploadClient::onDataRecv()

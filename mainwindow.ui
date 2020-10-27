@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,0,1,0">
+     <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="0,0,1,0,0">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -153,6 +153,13 @@
        <widget class="QPushButton" name="startUploadBtn">
         <property name="text">
          <string>开始上传</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="testBtn">
+        <property name="text">
+         <string>Test</string>
         </property>
        </widget>
       </item>

@@ -22,7 +22,8 @@ private:
     bool setSystemDateTime(QDateTime dt);
     void parseContent(QString content);
 
-    qint64 replayTimeSyncReq(bool setResult);
+    qint64 replyTimeSyncReq(bool setResult);
+    qint64 replyUploadReq(QString beginTime, QString endTime);
 };
 
 #endif // UPLOADCLIENT_H

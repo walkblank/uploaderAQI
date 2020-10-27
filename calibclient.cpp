@@ -13,6 +13,8 @@ CalibClient::CalibClient(QString s)
 {
     qDebug()<<s;
     sock = new QTcpSocket(this);
+    connect(sock, SIGNAL(connected()), this, SLOT(onConnected()));
+    connect(sock, SIGNAL(disconnected()), this, SLOT(onDisConnected()));
     connect(sock, SIGNAL(readyRead()), this, SLOT(onDataReady()));
 }
 
@@ -228,7 +230,7 @@ void CalibClient::simuDataProcess()
                 }
             }
 //            qDebug()<<"simu sendvals" << sendValList.join(";");
-            QString sendStr = QString("<sendVals%1>07\r\n").arg(sendValList.join(";"));
+            QString sendStr = QString("<sendVal %1>07\r\n").arg(sendValList.join(";"));
             sock->write(sendStr.toStdString().c_str());
         }
 

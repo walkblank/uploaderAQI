@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QSettings>
+#include <QTimer>
 
 #include "calibclient.h"
 #include "uploadclient.h"
@@ -29,15 +30,18 @@ private slots:
 
     void onDevConnected();
     void onDevDisconnected();
-//    void onDevError(QAbstractSocket::SocketError error);
-
     void on_startUploadBtn_clicked();
 
     void onCpcData(QString, QMap<QString,QString>);
 
-private:
-    Ui::MainWindow *ui;
+    void on_testBtn_clicked();
 
+    void onSecTimerTimeout();
+
+private:
+    QTimer *secTimer;
+
+    Ui::MainWindow *ui;
     QSettings *setting;
     UploadClient *upClient;
     CalibClient *cpcClient;
