@@ -4,8 +4,8 @@
 #include <windows.h>
 #include <time.h>
 
-UploadClient::UploadClient(QObject *parent)
-    : QTcpSocket(parent)
+UploadClient::UploadClient(AQIDataBaseMng *mng, QObject *parent)
+    : mng(mng), QTcpSocket(parent)
 {
     connect(this, SIGNAL(readyRead()), this, SLOT(onDataRecv()));
 }
@@ -19,6 +19,24 @@ qint64 UploadClient::uploadHourData(QString hourStr, double a18Value, double a19
             .arg(hourStr).arg(a18Value).arg(a18Flag).arg(a19Value).arg(a19Flag);
     qDebug()<<"hour data content" << uploadDataContent;
     return sendPacket(uploadDataContent);
+}
+
+qint64 UploadClient::replyHourQuery(QString qn, QString datatime, QString a18Value, QString a19Value)
+{
+    QString a18Flag = "N";
+    QString a19Flag = "N";
+    QString replyDataContent = QString("ST=22;CN=2062;PW=123456;MN=ATCS0001;CP=&&DataTime=%1;"
+                                       "QN=%2;A18-Avg=%3,A18-flag=%4;A19-Avg=%5,A19-flag=%6&&")
+                    .arg(datatime).arg(qn).arg(a18Value).arg(a18Flag).arg(a19Value).arg(a19Flag);
+    return sendPacket(replyDataContent);
+}
+
+qint64 UploadClient::replyHourQueryEnd(QString cnt, QString ret)
+{
+    QString replyContent = QString("ST=91;CN=9012;PW=123456;MN=ATCS0001;CP=&&QN=%1;Cou=%2;ExeRtn=%3&&")
+            .arg(QDateTime::currentDateTime().toString("yyyyMMddhhmmsszzz")).arg(cnt).arg(ret);
+
+    return sendPacket(replyContent);
 }
 
 qint64 UploadClient::uploadMinData(QString minStr, double a18Value, double a19Value)
@@ -51,9 +69,22 @@ qint64 UploadClient::replyTimeSyncReq(bool setResult)
     return sendPacket(replyContent);
 }
 
-qint64 UploadClient::replyUploadReq(QString beginTime, QString endTime)
+qint64 UploadClient::replyUploadReq(QString qn, QString beginTime, QString endTime)
 {
+    QString filter = QString("timestamp > \"%1\" and timestamp < \"%2\"")
+            .arg(QDateTime::fromString(beginTime, "yyyyMMddhhmmss").addSecs(-3600).toString("yyyyMMddhhmmss"))
+            .arg(QDateTime::fromString(endTime, "yyyyMMddhhmmss").addSecs(3600).toString("yyyyMMddhhmmss"));
+    mng->setCurrFilter(filter);
+    QSqlTableModel *tempModel = mng->getTableModel();
+    int cnt = tempModel->rowCount();
+    for(int i = 0; i < cnt; i ++)
+    {
+        qDebug()<<"record " << i << tempModel->record(i).value("timestamp").toString();
+        replyHourQuery(qn, tempModel->record(i).value("timestamp").toString(),
+                       tempModel->record(i).value("a18").toString(), tempModel->record(i).value("a19").toString());
+    }
 
+    return replyHourQueryEnd(QString("%1").arg(cnt), (cnt == 0) ? "1" : "100");
 }
 
 void UploadClient::parseContent(QString content)
@@ -67,7 +98,7 @@ void UploadClient::parseContent(QString content)
 
     QStringList fields;
     fields = content.split(";");
-    QString cmd, data;
+    QString cmd, data, qn;
     foreach(QString field, fields)
     {
         qDebug()<<field;
@@ -75,6 +106,8 @@ void UploadClient::parseContent(QString content)
             cmd = field.split("=")[1];
         if(field.contains("CP=&&"))
             data = field.split("&&")[1];
+        if(field.contains("QN="))
+            qn = field.split("=")[1];
     }
 
     qDebug()<<"cmd" << cmd << "\r\ndata" << data;
@@ -97,7 +130,8 @@ void UploadClient::parseContent(QString content)
             else if(time.contains("EndTime"))
                 endTime = time.split("=")[1];
         }
-        qDebug()<<"beginTime" << beginTime << "endTime" << endTime;
+        qDebug()<<"beginTime" << beginTime << "endTime" << endTime << "qn" << qn;
+        replyUploadReq(qn, beginTime, endTime);
     }
 }
 

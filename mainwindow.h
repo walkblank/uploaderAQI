@@ -51,16 +51,24 @@ private:
 private:
     void initChartsView();
     void loadSettings();
+    void loadHistoyChartView();
 
     QChart *liveChart;
     QChartView *liveChartView;
     QValueAxis *xAxis, *yAxis;
     QLineSeries *a18LineSerial, *a19LineSerial;
 
+    QChart *historyChart;
+    QChartView *historyChartView;
+    QValueAxis *xAxisH, *yAxisH;
+    QLineSeries *a18LineSerialH, *a19LineSerialH;
+
+
     int secDataCnt = 0;
     int hourDataCnt = 0;
-    double minA18Sum, minA19Sum;
-    double hourA19Sum, hourA18Sum;
-    QList<double> tempA18Datas, tempA19Datas;
+    double minA18Sum = 0;
+    double minA19Sum = 0;
+    double hourA19Sum = 0;
+    double hourA18Sum = 0;
 };
 #endif // MAINWINDOW_H

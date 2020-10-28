@@ -439,7 +439,7 @@ bool AQIDataBaseMng::addRecord(QString timestamp, QString a18, QString a19)
 
 bool AQIDataBaseMng::setCurrFilter(QString filter)
 {
-     setCurrentTable("aqidb", filter);
+     setCurrentTable("aqirecords", filter);
 }
 
 QSqlTableModel *AQIDataBaseMng::getRecordTable(QString filter)

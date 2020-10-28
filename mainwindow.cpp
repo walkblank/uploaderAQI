@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    mng = new AQIDataBaseMng();
     cpcClient = new CalibClient();
     cpcClient->setClientType("cpc");
     connect(cpcClient, SIGNAL(sigConnected()), this, SLOT(onDevConnected()));
@@ -19,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(cpcClient, SIGNAL(sigReadData(QString,QMap<QString,QString>)),
             this, SLOT(onCpcData(QString,QMap<QString,QString>)));
 
-    upClient =  new UploadClient();
+    upClient =  new UploadClient(mng);
     connect(upClient, SIGNAL(connected()), this, SLOT(onServerConnected()));
     connect(upClient, SIGNAL(disconnected()), this, SLOT(onServerDisconnected()));
     connect(upClient, SIGNAL(error(QAbstractSocket::SocketError)),
@@ -30,8 +31,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     loadSettings();
     initChartsView();
-
-    mng = new AQIDataBaseMng();
 }
 
 MainWindow::~MainWindow()
@@ -50,7 +49,7 @@ void MainWindow::onSecTimerTimeout()
         cpcClient->queryAQI();
     if(curTime.time().second() == 0)
     {
-        QString timeStr = curTime.toString("yyyyddMMhhmmss");
+        QString timeStr = curTime.toString("yyyyMMddhhmmss");
         double averageA18Value = minA18Sum/secDataCnt;
         double averageA19Value = minA19Sum/secDataCnt;
         qDebug()<<"min average A18" << averageA18Value;
@@ -98,6 +97,14 @@ void MainWindow::onSecTimerTimeout()
 
 }
 
+void MainWindow::loadHistoyChartView()
+{
+    mng->setCurrFilter(QString());
+    QSqlTableModel *tempModel = mng->getTableModel();
+    int cnt = tempModel->rowCount();
+
+}
+
 void MainWindow::initChartsView()
 {
     liveChart = new QChart();
@@ -133,6 +140,41 @@ void MainWindow::initChartsView()
     a19LineSerial->attachAxis(xAxis);
 
     ui->liveCharView->addWidget(liveChartView);
+
+    historyChart= new QChart();
+    historyChartView = new QChartView(historyChart);
+    liveChartView->setMinimumSize(1000, 600);
+    a18LineSerialH = new QLineSeries();
+    a18LineSerialH->setName("A18");
+    a19LineSerialH = new QLineSeries();
+    a19LineSerialH->setName("A19");
+
+    xAxisH = new QValueAxis();
+    xAxisH->setRange(0, 720);
+    xAxisH->setTickCount(31);
+    xAxisH->setMinorTickCount(0);
+    xAxisH->setLabelFormat("%d");
+    xAxisH->setTitleText("time(Hour)");
+
+    yAxisH = new QValueAxis();
+    yAxisH->setRange(0, 100);
+    yAxisH->setTickCount(11);
+    yAxisH->setMinorTickCount(1);
+    yAxisH->setLabelFormat("%.2f");
+    yAxisH->setTitleText("AQI");
+
+    historyChart->addAxis(xAxisH, Qt::AlignBottom);
+    historyChart->addAxis(yAxisH, Qt::AlignLeft);
+    historyChart->addSeries(a18LineSerialH);
+    historyChart->addSeries(a19LineSerialH);
+
+    a18LineSerialH->attachAxis(yAxisH);
+    a18LineSerialH->attachAxis(xAxisH);
+    a19LineSerialH->attachAxis(yAxisH);
+    a19LineSerialH->attachAxis(xAxisH);
+
+    ui->historyChartView->addWidget(historyChartView);
+
 }
 
 void MainWindow::loadSettings()
@@ -219,8 +261,6 @@ void MainWindow::onCpcData(QString client, QMap<QString, QString> data)
     qDebug()<<" on data " << client << data;
     if(data.keys().contains("62"))
     {
-        tempA18Datas.append(data["62"].toDouble());
-        tempA19Datas.append(data["64"].toDouble());
         minA18Sum += data["62"].toDouble();
         minA19Sum += data["64"].toDouble();
         hourA18Sum += data["62"].toDouble();
@@ -228,8 +268,8 @@ void MainWindow::onCpcData(QString client, QMap<QString, QString> data)
         secDataCnt += 1;
         hourDataCnt += 1;
 
-        qDebug()<<"minA18Sum" << minA18Sum;
-        qDebug()<<"minA19Sum" << minA19Sum;
+        qDebug()<<"minA18Sum" << minA18Sum << "hourA18Sum" << QString::number(hourA18Sum, 'f', 2)  << hourA18Sum;
+        qDebug()<<"minA19Sum" << minA19Sum << "hourA19Sum" << QString::number(hourA19Sum, 'f', 2)  << hourA19Sum;
     }
 }
 
@@ -255,9 +295,14 @@ void MainWindow::on_startUploadBtn_clicked()
 
 void MainWindow::on_testBtn_clicked()
 {
-    QSqlTableModel *model = mng->getRecordTable(QString());
-    qDebug()<<model->rowCount() << model->record(0);
     static double value = 30;
+    QDateTime tmpTime = QDateTime::fromString("20201011000000", "yyyyMMddhhmmss");
+    for(int i = 0; i < 1024; i ++)
+    {
+        qDebug()<<"time+" << tmpTime.addSecs(i*3600);
+        mng->addRecord(tmpTime.addSecs(i*3600).toString("yyyyMMddhhmmss"), QString("%1").arg(i%2 == 0 ? value++ : value --),
+                       QString("%1").arg(i%2 == 0 ? value -- : value ++));
+    }
     static int x = 1;
     if(x > curMaxPonitCnt)
     {
