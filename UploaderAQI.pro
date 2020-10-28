@@ -1,5 +1,7 @@
 QT       += core gui
 QT       += network
+QT       += charts
+QT       += sql
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,12 +20,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     calibclient.cpp \
+    databasemng.cpp \
     main.cpp \
     mainwindow.cpp \
     uploadclient.cpp
 
 HEADERS += \
     calibclient.h \
+    databasemng.h \
     mainwindow.h \
     uploadclient.h
 

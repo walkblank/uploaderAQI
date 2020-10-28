@@ -4,9 +4,11 @@
 #include <QMainWindow>
 #include <QSettings>
 #include <QTimer>
+#include <QtCharts>
 
 #include "calibclient.h"
 #include "uploadclient.h"
+#include "databasemng.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,12 +32,11 @@ private slots:
 
     void onDevConnected();
     void onDevDisconnected();
+    void onDevConnError(QAbstractSocket::SocketError error);
     void on_startUploadBtn_clicked();
 
     void onCpcData(QString, QMap<QString,QString>);
-
     void on_testBtn_clicked();
-
     void onSecTimerTimeout();
 
 private:
@@ -45,9 +46,21 @@ private:
     QSettings *setting;
     UploadClient *upClient;
     CalibClient *cpcClient;
+    AQIDataBaseMng *mng;
 
 private:
     void initChartsView();
     void loadSettings();
+
+    QChart *liveChart;
+    QChartView *liveChartView;
+    QValueAxis *xAxis, *yAxis;
+    QLineSeries *a18LineSerial, *a19LineSerial;
+
+    int secDataCnt = 0;
+    int hourDataCnt = 0;
+    double minA18Sum, minA19Sum;
+    double hourA19Sum, hourA18Sum;
+    QList<double> tempA18Datas, tempA19Datas;
 };
 #endif // MAINWINDOW_H

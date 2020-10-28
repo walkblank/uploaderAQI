@@ -5,6 +5,7 @@ CalibClient::CalibClient()
     sock = new QTcpSocket(this);
     connect(sock, SIGNAL(connected()), this, SLOT(onConnected()));
     connect(sock, SIGNAL(disconnected()), this, SLOT(onDisConnected()));
+    //connect(sock, SIGNAL(error(QAbstractSocket::SocketError)), this, SLOT(onDevConnError(QAbstractSocket::SocketError)));
     connect(sock, SIGNAL(readyRead()), this, SLOT(onDataReady()));
 }
 
@@ -42,6 +43,14 @@ void CalibClient::connectToHost(QString host, int port)
 void CalibClient::disconnectFromHost()
 {
     sock->disconnectFromHost();
+}
+
+
+int CalibClient::queryAQI()
+{
+    QList<QString> queryKeys;
+    queryKeys << "62" << "64";
+    return getValue(queryKeys);
 }
 
 void CalibClient::enterClassifierMode(QString diameter)
@@ -111,6 +120,11 @@ void CalibClient::onConnected()
 void CalibClient::onDisConnected()
 {
     emit sigDisConnected();
+}
+
+void CalibClient::onDevConnError(QAbstractSocket::SocketError err)
+{
+    emit sigError(err);
 }
 
 void CalibClient::onDataReady()

@@ -16,6 +16,8 @@ public:
     void setClientType(QString type) {clientType = type;}
     QString getClientType() { return clientType;}
 
+    int queryAQI();
+
     void enterClassifierMode(QString diameter);
     void enterSmpsClassifierMode(QString diameter);
     void enterAutoMode();
@@ -37,11 +39,13 @@ signals:
     void sigSetRet(QString type, QString ret, QMap<QString,QString> setValues);
     void sigConnected();
     void sigDisConnected();
+    void sigError(QAbstractSocket::SocketError error);
 
 private slots:
     void onDataReady();
     void onConnected();
     void onDisConnected();
+    void onDevConnError(QAbstractSocket::SocketError);
 
 private:
     QTcpSocket *sock;
