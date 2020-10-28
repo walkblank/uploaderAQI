@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QTcpSocket>
 #include <QString>
+#include "databasemng.h"
 
 class UploadClient : public QTcpSocket
 {
@@ -17,13 +18,16 @@ private slots:
     void onDataRecv();
 
 private:
-    qint64  sendPacket(QString contentStr);
     int  getCRC(QString str);
     bool setSystemDateTime(QDateTime dt);
     void parseContent(QString content);
 
     qint64 replyTimeSyncReq(bool setResult);
     qint64 replyUploadReq(QString beginTime, QString endTime);
+    qint64 sendPacket(QString contentStr);
+
+private:
+    AQIDataBaseMng *mng = nullptr;
 };
 
 #endif // UPLOADCLIENT_H

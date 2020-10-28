@@ -14,7 +14,6 @@ bool DataBaseMng::createDB(QString dbname, QString dir)
             .append(QString("/%1").arg(dir))
             .append(QString("/%1.db").arg(dbname));
 //    if(!QSqlDatabase::contains(dbname))
-    qDebug()<<"db full name" << fullName;
     if(!QSqlDatabase::contains(fullName))
     {
 //        database = QSqlDatabase::addDatabase("QSQLITE", dbname);
@@ -30,7 +29,6 @@ bool DataBaseMng::createDB(QString dbname, QString dir)
     }
 
     bool ret = database.open();
-    qDebug()<<"db open" << ret;
     if(ret)
     {
         tmodel = new FaceSqlTableModel(nullptr, database);

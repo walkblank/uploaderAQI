@@ -82,6 +82,7 @@ void MainWindow::onSecTimerTimeout()
             hourA18Sum = 0;
             hourA19Sum = 0;
             hourDataCnt = 0;
+            mng->addRecord(timeStr, QString("%1").arg(avHourA18Val), QString("%1").arg(avHourA19Val));
         }
     }
 
@@ -101,7 +102,7 @@ void MainWindow::initChartsView()
 {
     liveChart = new QChart();
     liveChartView = new QChartView(liveChart);
-    liveChartView->setMinimumSize(1200, 600);
+    liveChartView->setMinimumSize(1000, 600);
     a18LineSerial = new QLineSeries();
     a18LineSerial->setName("A18");
     a19LineSerial = new QLineSeries();
