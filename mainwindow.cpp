@@ -4,6 +4,11 @@
 #include <QDateTime>
 #include <QTime>
 
+static int a18ChartPointCnt = 0;
+static int a19ChartPointCnt = 0;
+static int curMaxPonitCnt = 60;
+static int currentIndex = 0;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -31,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     loadSettings();
     initChartsView();
+    loadHistoyChartView1(0);
 }
 
 MainWindow::~MainWindow()
@@ -38,9 +44,6 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-static int a18ChartPointCnt = 0;
-static int a19ChartPointCnt = 0;
-static int curMaxPonitCnt = 60;
 
 void MainWindow::onSecTimerTimeout()
 {
@@ -60,8 +63,11 @@ void MainWindow::onSecTimerTimeout()
         minA19Sum = 0;
         a18ChartPointCnt += 1;
         a19ChartPointCnt += 1;
+        if(a18ChartPointCnt == 1)
+            ui->liveStartTime->setText(curTime.toString("yyyy/MM/dd-hh:mm:ss"));
         a18LineSerial->append(a18ChartPointCnt, averageA18Value);
         a19LineSerial->append(a19ChartPointCnt, averageA19Value);
+        ui->liveEndTime->setText(curTime.toString("yyyy/MM/dd-hh:mm:ss"));
 
         qDebug()<<"curMaxPointCnt"<<curMaxPonitCnt;
         qDebug()<<"a18PointCnt" << a18ChartPointCnt;
@@ -97,23 +103,54 @@ void MainWindow::onSecTimerTimeout()
 
 }
 
-static int currentIndex = 0;
-void MainWindow::loadHistoyChartView(int index)
+// dir 0 forward, 1  backward
+void MainWindow::loadHistoyChartView1(int direction)
 {
-//    static int currentIndex = 0;
-    a18LineSerialH->clear();
-    a19LineSerialH->clear();
+    static QList<int> startIndexes;
+    static int curPos = 0;
+
     mng->setCurrFilter(QString());
     QSqlTableModel *tempModel = mng->getTableModel();
-    int cnt = tempModel->rowCount();
-    QSqlRecord startRecord = tempModel->record(index);
+    while(tempModel->canFetchMore())
+        tempModel->fetchMore();
+    int recordCnt = tempModel->rowCount();
+
+    if(direction == 0)
+    {
+        if(currentIndex >= recordCnt)
+            return;
+        curPos += 1;
+    }
+    else if(direction == 1)
+    {
+        curPos -= 1;
+        currentIndex = startIndexes[curPos];
+    }
+
+    if(curPos == -1)
+    {
+        curPos = 0;
+        return;
+    }
+
+
+    if(curPos > startIndexes.size())
+        startIndexes.append(currentIndex);
+
+
+
+
+    a18LineSerialH->clear();
+    a19LineSerialH->clear();
+
+    QSqlRecord startRecord = tempModel->record(currentIndex);
+
     QDateTime startRecordTime = QDateTime::fromString(startRecord.value("timestamp").toString(),
-                                                "yyyyMMddhhmmss");
+                                                      "yyyyMMddhhmmss");
     qDebug()<<"startRecordTime" << startRecordTime;
-
     QDateTime startTime = startRecordTime.addSecs(-3600*24*(startRecordTime.date().day()-1)-3600*startRecordTime.time().hour());
-
     qDebug()<<"startTime" << startTime << startTime.date().daysInMonth();
+    ui->startTime->setText(startTime.toString("yyyy/MM/dd hh:mm:ss"));
 
     for(int i = 0; i < 744; i ++)
     {
@@ -124,8 +161,8 @@ void MainWindow::loadHistoyChartView(int index)
         qDebug()<<"tempTime" << tempTime.toString("yyyyMMddhhmmss");
         if(tempTime.toString("yyyyMMddhhmmss") == tempModel->record(currentIndex).value("timestamp").toString())
         {
-            a18LineSerialH->append(i,tempModel->record(index).value("a19").toString().toDouble());
-            a19LineSerialH->append(i,tempModel->record(index).value("a18").toString().toDouble());
+            a18LineSerialH->append(i,tempModel->record(currentIndex).value("a18").toString().toDouble());
+            a19LineSerialH->append(i,tempModel->record(currentIndex).value("a19").toString().toDouble());
             currentIndex += 1;
         }
         else
@@ -133,6 +170,8 @@ void MainWindow::loadHistoyChartView(int index)
             a18LineSerialH->append(i,0);
             a19LineSerialH->append(i,0);
         }
+
+        ui->endTime->setText(tempTime.toString("yyyy/MM/dd hh:mm:ss"));
     }
 }
 
@@ -332,15 +371,13 @@ void MainWindow::on_startUploadBtn_clicked()
 
 void MainWindow::on_testBtn_clicked()
 {
-    loadHistoyChartView(currentIndex);
-    return;
     static double value = 30;
     QDateTime tmpTime = QDateTime::fromString("20201011000000", "yyyyMMddhhmmss");
     for(int i = 0; i < 8192; i ++)
     {
         qDebug()<<"time+" << tmpTime.addSecs(i*3600);
         mng->addRecord(tmpTime.addSecs(i*3600).toString("yyyyMMddhhmmss"), QString("%1").arg(i%2 == 0 ? 30 : 35),
-                       QString("%1").arg(i%2 == 0 ? 35 : 30));
+                       QString("%1").arg(i%2 == 0 ? 40 : 50));
     }
     static int x = 1;
     if(x > curMaxPonitCnt)
@@ -360,4 +397,20 @@ void MainWindow::on_testBtn_clicked()
     }
 
     a18LineSerial->append(x++, x%2 == 0 ? value++ : value--);
+}
+
+void MainWindow::on_preMonBtn_clicked()
+{
+
+   loadHistoyChartView1(1);
+}
+
+void MainWindow::on_nextMonBtn_clicked()
+{
+   loadHistoyChartView1(0);
+}
+
+void MainWindow::on_exportRecordBtn_clicked()
+{
+
 }

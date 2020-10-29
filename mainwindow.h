@@ -39,6 +39,12 @@ private slots:
     void on_testBtn_clicked();
     void onSecTimerTimeout();
 
+    void on_preMonBtn_clicked();
+
+    void on_nextMonBtn_clicked();
+
+    void on_exportRecordBtn_clicked();
+
 private:
     QTimer *secTimer;
 
@@ -51,7 +57,7 @@ private:
 private:
     void initChartsView();
     void loadSettings();
-    void loadHistoyChartView(int index = 0);
+    void loadHistoyChartView1(int dir);
 
     QChart *liveChart;
     QChartView *liveChartView;
