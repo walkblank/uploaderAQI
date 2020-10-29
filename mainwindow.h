@@ -51,7 +51,7 @@ private:
 private:
     void initChartsView();
     void loadSettings();
-    void loadHistoyChartView();
+    void loadHistoyChartView(int index = 0);
 
     QChart *liveChart;
     QChartView *liveChartView;
