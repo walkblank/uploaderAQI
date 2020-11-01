@@ -4,6 +4,8 @@
 #include <QDateTime>
 #include <QTime>
 
+#include <QtXlsx>
+
 static int a18ChartPointCnt = 0;
 static int a19ChartPointCnt = 0;
 static int curMaxPonitCnt = 60;
@@ -412,5 +414,28 @@ void MainWindow::on_nextMonBtn_clicked()
 
 void MainWindow::on_exportRecordBtn_clicked()
 {
+    QXlsx::Document *xlsxFile =  new QXlsx::Document(QString("AQI_%1.xlsx").arg(QDateTime::currentDateTime().toString("yyyyMMdd-hhmmss")));
 
+    xlsxFile->write(1, 1,  "Time");
+    xlsxFile->write(1, 2, "A18");
+    xlsxFile->write(1, 3, "A19");
+
+    mng->setCurrFilter(QString());
+    QSqlTableModel *tempModel = mng->getTableModel();
+    while(tempModel->canFetchMore())
+        tempModel->fetchMore();
+    int recordCnt = tempModel->rowCount();
+
+    for(int i = 2; i < recordCnt + 2; i ++)
+    {
+        QSqlRecord record = tempModel->record(i-2);
+        xlsxFile->write(i, 1, QDateTime::fromString(record.value("timestamp").toString(), "yyyyMMddhhmmss").toString("yyyy/MM/dd-hh:mm:ss"));
+        xlsxFile->write(i, 2, record.value("a18").toString());
+        xlsxFile->write(i, 3, record.value("a19").toString());
+        qApp->processEvents();
+    }
+
+    QMessageBox::information(this, "提示", "记录已导出", QMessageBox::Ok);
+
+    xlsxFile->save();
 }
